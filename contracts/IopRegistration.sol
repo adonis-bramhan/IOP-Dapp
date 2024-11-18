@@ -3,54 +3,62 @@ pragma solidity ^0.8.0;
 
 contract IoPRegistration {
 
-    // Struct to hold stakeholder information
-    struct Stakeholder {
-        bytes32 pStkX; // Encrypted identity
-        bytes32 skStkX; // Session key for secure communication
-        bytes32 pidStkX; // Stakeholder identity hash
-        bytes32 cStkX; // The complete encrypted identity
-        uint256 mXR; // Random number generated during registration
+    mapping(address => bytes32) public sessionKeys; // stores session keys for STKA and STKB
+    mapping(address => bytes32) public passwords; // stores password hashes for STKA and STKB
+
+    // Register a new stakeholder (STKA)
+    function register(
+        address stkaAddress, 
+        bytes32 passwordHash,
+        bytes32 mXR
+    ) public {
+        bytes32 pidStkA = keccak256(abi.encodePacked(stkaAddress, mXR)); // PidStkA = H(IdStkA || mXR)
+        bytes32 pStkA = keccak256(abi.encodePacked(pidStkA, passwordHash)); // PStkA = H(PidStkA ⊕ PwStkA)
+        bytes32 skStkA = keccak256(abi.encodePacked(pStkA, passwordHash)); // SkStkA = H(PStkA ⊕ SkSP)
+
+        // Store stakeholder information (PStkA, SkStkA)
+        sessionKeys[stkaAddress] = skStkA;
+        passwords[stkaAddress] = pStkA;
     }
 
-    // Mapping to store stakeholder data
-    mapping(address => Stakeholder) public stakeholders;
-
-    // Secret key of the service provider (SP)
-    bytes32 private constant skSP = 0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef;
-
-    // Event to emit the registration details (for frontend use)
-    event StakeholderRegistered(address indexed stkX, bytes32 pStkX, bytes32 skStkX, bytes32 pidStkX, uint256 mXR);
-
-    // Register Stakeholder
-    function registerStakeholder(string memory idStkX, string memory pwStkX) public {
-        uint256 mXR = uint256(keccak256(abi.encodePacked(block.timestamp, msg.sender, idStkX)));
-        bytes32 pidStkX = keccak256(abi.encodePacked(idStkX, mXR)); // PidStkX = H(IdStkX || mXR)
-        bytes32 pStkX = keccak256(abi.encodePacked(pidStkX ^ keccak256(abi.encodePacked(pwStkX)))); // PStkX = H(PidStkX ⊕ H(PwStkX))
-
-        // Generate session key SkStkX using secret key SkSP
-        bytes32 skStkX = keccak256(abi.encodePacked(pStkX ^ skSP)); // SkStkX = H(PStkX ⊕ SkSP)
-
-        // Generate complete encrypted identity CStkX
-        bytes32 cStkX = keccak256(abi.encodePacked(idStkX, pwStkX, mXR)); // CStkX = H(IdStkX || PwStkX || mXR)
-
-        // Store data in the stakeholders mapping
-        stakeholders[msg.sender] = Stakeholder(pStkX, skStkX, pidStkX, cStkX, mXR);
-
-        // Emit event for frontend use
-        emit StakeholderRegistered(msg.sender, pStkX, skStkX, pidStkX, mXR);
+    // Verify authentication between STKA and STKB
+    function verifyAuthentication(
+        address stkaAddress, 
+        address stkbAddress,
+        bytes32 authHashA, 
+        bytes32 authHashB, 
+        uint256 timestamp
+    ) public view returns (bytes32 sessionTokenA, bytes32 sessionTokenB) {
+        // Calculate session tokens directly
+        sessionTokenA = keccak256(abi.encodePacked(sessionKeys[stkaAddress], authHashA, timestamp));
+        sessionTokenB = keccak256(abi.encodePacked(sessionKeys[stkbAddress], authHashB, timestamp));
     }
 
-    // Function to verify Stakeholder identity during authentication
-    function verifyStakeholder(string memory idStkX, string memory pwStkX) public view returns (bool) {
-        Stakeholder memory stk = stakeholders[msg.sender];
-        bytes32 pidStkX = keccak256(abi.encodePacked(idStkX, stk.mXR)); // Recalculate PidStkX
+    // Verify and create session tokens
+    function verifyAndCreateSessionTokens(
+        address stkaAddress, 
+        address stkbAddress,
+        bytes32 authHashA, 
+        bytes32 authHashB, 
+        uint256 timestamp
+    ) public view returns (bytes32 sessionTokenA, bytes32 sessionTokenB) {
+        // Calculate session tokens directly
+        sessionTokenA = keccak256(abi.encodePacked(sessionKeys[stkaAddress], authHashA, timestamp));
+        sessionTokenB = keccak256(abi.encodePacked(sessionKeys[stkbAddress], authHashB, timestamp));
 
-        // Recalculate PStkX and compare with stored value
-        bytes32 calculatedPStkX = keccak256(abi.encodePacked(pidStkX ^ keccak256(abi.encodePacked(pwStkX))));
+        // No need to redeclare sessionTokenA or sessionTokenB inside the body
+    }
 
-        if (calculatedPStkX == stk.pStkX) {
-            return true; // Identity is verified
-        }
-        return false; // Identity verification failed
+    // Example of a function that could be used to initiate authentication
+    function authenticate(
+        address stkaAddress,
+        address stkbAddress,
+        bytes32 authHashA,
+        bytes32 authHashB
+    ) public view returns (bytes32 sessionTokenA, bytes32 sessionTokenB) {
+        // This function would combine the authentication and session token creation logic
+        uint256 timestamp = block.timestamp;
+
+        return verifyAndCreateSessionTokens(stkaAddress, stkbAddress, authHashA, authHashB, timestamp);
     }
 }

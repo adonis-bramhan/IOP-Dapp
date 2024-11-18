@@ -1,44 +1,64 @@
-/* CSS for styling */
 body {
   font-family: Arial, sans-serif;
-  background-color: #f4f4f9;
   margin: 0;
   padding: 0;
+  background-color: #f5f5f5;
 }
 
-.container {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
+.App {
+  text-align: center;
+}
+
+.App-header {
+  margin: 20px;
 }
 
 h1 {
+  margin-bottom: 20px;
   color: #333;
-  margin-bottom: 30px;
 }
 
-button {
-  background-color: #4CAF50;
-  color: white;
-  border: none;
-  padding: 15px 32px;
+.grid-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  justify-items: center;
+  align-items: center;
+  margin: 20px auto;
+  width: 80%;
+}
+
+.grid-item {
+  background-color: #333;
+  color: #fff;
+  font-size: 18px;
+  font-weight: bold;
   text-align: center;
-  font-size: 16px;
+  padding: 20px;
+  border-radius: 8px;
   cursor: pointer;
-  margin: 10px;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.grid-item:hover {
+  transform: translateY(-5px);
+  box-shadow: 0px 8px 12px rgba(0, 0, 0, 0.3);
+}
+
+.connect-wallet {
+  background-color: #007bff;
+  color: #fff;
+  font-size: 16px;
+  padding: 10px 20px;
+  border: none;
   border-radius: 5px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  transition: background-color 0.3s ease, transform 0.3s ease;
+  cursor: pointer;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+  transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
-button:hover {
-  background-color: #45a049;
-  transform: translateY(-2px);
-}
-
-button:active {
-  background-color: #388e3c;
-  transform: translateY(2px);
+.connect-wallet:hover {
+  background-color: #0056b3;
+  transform: translateY(-3px);
 }

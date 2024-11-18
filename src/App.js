@@ -126,67 +126,124 @@ const IoPRegistrationABI = [{
 
 // Replace with your contract address
 
-const contractAddress = "0xb29fd8Cd1a724C8E97756f12D084c60c46c12648";
+
+
+
+
 
 
 const App = () => {
-  const [web3, setWeb3] = useState(null);
-  const [account, setAccount] = useState(null);
-  const [contract, setContract] = useState(null);
+  const [account, setAccount] = useState("");
+  const contractAddress = "0xb29fd8Cd1a724C8E97756f12D084c60c46c12648"; // Replace with deployed contract address
+  const web3 = new Web3(window.ethereum);
+  const contract = new web3.eth.Contract(IoPRegistrationABI, contractAddress);
 
-  useEffect(() => {
-    // Initialize Web3
-    const web3Instance = new Web3(window.ethereum);
-    setWeb3(web3Instance);
-
-    // Request account access
-    window.ethereum.request({ method: "eth_requestAccounts" }).then((accounts) => {
+  // Connect Wallet
+  const connectWallet = async () => {
+    if (window.ethereum) {
+      const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
       setAccount(accounts[0]);
-    });
-
-    // Initialize contract instance using ABI and contract address
-    const contractInstance = new web3Instance.eth.Contract(IoPRegistrationABI, contractAddress);
-    setContract(contractInstance);
-  }, [web3]);
-
-  const registerStakeholder = async () => {
-    try {
-      const IdStkA = "SupplierA";
-      const PwStkA = "password123";
-      const mXR = "random123";
-
-      // Call the registerStakeholder function of the contract
-      await contract.methods.registerStakeholder(IdStkA, PwStkA, mXR).send({ from: account });
-      console.log("Stakeholder registered successfully!");
-    } catch (error) {
-      console.error("Error while registering: ", error);
+    } else {
+      alert("Please install Metamask!");
     }
   };
 
-  const verifyAndCreateSessionTokens = async () => {
+  // Function Handlers
+  const registerStakeholder = async () => {
+    // Example call for registering a stakeholder
+    const id = "SupplierA";
+    const password = "password123";
+    const random = "random123";
+
     try {
-      const stkaAddress = "ADDRESS_STKA";
-      const stkbAddress = "ADDRESS_STKB";
-      const authHashA = "AUTH_HASH_A";
-      const authHashB = "AUTH_HASH_B";
-      const timestamp = "TIMESTAMP";
-
-      // Call the verifyAndCreateSessionTokens function of the contract
-      const response = await contract.methods.verifyAndCreateSessionTokens(
-        stkaAddress, stkbAddress, authHashA, authHashB, timestamp
-      ).call();
-
-      console.log("Session Tokens: ", response);
+      await contract.methods.registerStakeholder(id, password, random).send({ from: account });
+      alert("Stakeholder Registered!");
     } catch (error) {
-      console.error("Error while verifying: ", error);
+      console.error(error);
+      alert("Registration Failed!");
+    }
+  };
+
+  const registerISP = async () => {
+    // Example call for registering an intermediate service provider
+    try {
+      await contract.methods.registerIntermediateServiceProvider().send({ from: account });
+      alert("ISP Registered!");
+    } catch (error) {
+      console.error(error);
+      alert("Registration Failed!");
+    }
+  };
+
+  const startAuthentication = async () => {
+    try {
+      await contract.methods.initiateAuthentication().send({ from: account });
+      alert("Authentication Started!");
+    } catch (error) {
+      console.error(error);
+      alert("Authentication Failed!");
+    }
+  };
+
+  const verifyAuthentication = async () => {
+    try {
+      await contract.methods.verifyAuthentication().call({ from: account });
+      alert("Authentication Verified!");
+    } catch (error) {
+      console.error(error);
+      alert("Verification Failed!");
+    }
+  };
+
+  const createSessionTokens = async () => {
+    try {
+      await contract.methods.verifyAndCreateSessionTokens().send({ from: account });
+      alert("Session Tokens Created!");
+    } catch (error) {
+      console.error(error);
+      alert("Token Creation Failed!");
+    }
+  };
+
+  const viewBlockchainLogs = async () => {
+    try {
+      const logs = await contract.methods.getAllLogs().call({ from: account });
+      console.log(logs);
+      alert("Logs retrieved. Check console for details.");
+    } catch (error) {
+      console.error(error);
+      alert("Failed to fetch logs!");
     }
   };
 
   return (
-    <div className="container">
-      <h1>IoP DApp</h1>
-      <button onClick={registerStakeholder}>Register Stakeholder</button>
-      <button onClick={verifyAndCreateSessionTokens}>Verify and Create Session Tokens</button>
+    <div className="App">
+      <header className="App-header">
+        <button className="connect-wallet" onClick={connectWallet}>
+          {account ? `Connected: ${account.slice(0, 6)}...${account.slice(-4)}` : "Connect Wallet"}
+        </button>
+        <h1>IoP Registration Dashboard</h1>
+        <div className="grid-container">
+          <div className="grid-item" onClick={registerStakeholder}>
+            Register Stakeholder
+          </div>
+          <div className="grid-item" onClick={registerISP}>
+            Register ISP
+          </div>
+          <div className="grid-item" onClick={startAuthentication}>
+            Start Authentication
+          </div>
+          <div className="grid-item" onClick={verifyAuthentication}>
+            Verify Authentication
+          </div>
+          <div className="grid-item" onClick={createSessionTokens}>
+            Create Session Tokens
+          </div>
+          <div className="grid-item" onClick={viewBlockchainLogs}>
+            View Blockchain Logs
+          </div>
+        </div>
+      </header>
     </div>
   );
 };
